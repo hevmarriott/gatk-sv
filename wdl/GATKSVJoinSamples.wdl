@@ -434,8 +434,8 @@ task CopyNumberPosteriors {
 
 task ClusterVariants {
   input {
-    File calls_file
-    File calls_file_index
+    File vcf
+    File vcf_index
     String contig
     File sr_file
     File sr_index
@@ -484,7 +484,7 @@ task ClusterVariants {
   command <<<
     set -euo pipefail
     ~{gatk_path} --java-options "-Xmx~{java_mem_mb}m" SVCluster \
-      -V ~{calls_file} \
+      -V ~{vcf} \
       -O ~{batch}.clustered.vcf.gz \
       -L ~{contig} \
       -XL ~{gatk_sv_cluster_exclude_intervals} \
@@ -532,8 +532,8 @@ task MergeSVCalls {
   Int java_mem_mb = ceil(mem_gb * 1000 * 0.8)
 
   output {
-    File out = "~{batch}.merged.sv.tsv.gz"
-    File out_index = "~{batch}.merged.sv.tsv.gz.tbi"
+    File out = "~{batch}.merged.vcf.gz"
+    File out_index = "~{batch}.merged.vcf.gz.tbi"
   }
   command <<<
     set -euo pipefail
@@ -551,7 +551,7 @@ task MergeSVCalls {
     ~{gatk_path} --java-options "-Xmx~{java_mem_mb}m" MergeSVCalls \
       --arguments_file args.txt \
       --sequence-dictionary ~{ref_fasta_dict} \
-      --output ~{batch}.merged.sv.tsv.gz \
+      --output ~{batch}.merged.vcf.gz \
       --ignore-dict
   >>>
   runtime {
