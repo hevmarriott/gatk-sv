@@ -3,6 +3,8 @@
   "GATKSVGenotype.vcf" : {{ ref_panel.joined_vcf | tojson }},
   "GATKSVGenotype.sample_coverage_file" : {{ ref_panel.sample_coverage_file | tojson }},
 
+  "GATKSVGenotype.runtime_attr_infer": {"mem_gb":  "15"},
+
   "GATKSVGenotype.records_per_shard" : "2000",
 
   "GATKSVGenotype.genotyping_gatk_docker": {{ dockers.gatk_sv_v2_docker | tojson }},
