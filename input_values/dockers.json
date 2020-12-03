@@ -16,5 +16,7 @@
   "sv_pipeline_docker" : "us.gcr.io/broad-dsde-methods/cwhelan/sv-pipeline:cw-end2header-69e9e19",
   "sv_pipeline_qc_docker" : "us.gcr.io/broad-dsde-methods/markw/sv-pipeline-qc:mw-xz-fixes-7cbffee",
   "sv_pipeline_rdtest_docker" : "us.gcr.io/broad-dsde-methods/gatk-sv/sv-pipeline-rdtest:mw-gnomad-02-6a66c96",
-  "wham_docker" : "us.gcr.io/broad-dsde-methods/wham:8645aa"
+  "wham_docker" : "us.gcr.io/broad-dsde-methods/wham:8645aa",
+
+  "gatk_sv_v2_docker" : "us.gcr.io/broad-dsde-methods/markw/gatk:6a12c4b2c82d5662dcaba9e97f6b953eb17822f8"
 }

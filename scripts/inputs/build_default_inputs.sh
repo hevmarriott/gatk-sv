@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 function usage() {
   printf "Usage: \n \
     %s -d <REPO_BASE_DIR> \n \
@@ -31,6 +31,7 @@ if [[ ! -d "$BASE_DIR" ]]; then
 fi
 
 scripts/inputs/build_inputs.py ${BASE_DIR}/input_values ${BASE_DIR}/input_templates ${BASE_DIR}/inputs -a '{"ref_panel" : "ref_panel_1kg_v2"}'
+scripts/inputs/build_inputs.py ${BASE_DIR}/input_values ${BASE_DIR}/input_templates ${BASE_DIR}/inputs_small -a '{"ref_panel" : "ref_panel_1kg_v2_small"}'
 
 scripts/inputs/build_inputs.py ${BASE_DIR}/input_values ${BASE_DIR}/test_input_templates ${BASE_DIR}/test_inputs_small -a '{"test_batch" : "test_batch_small"}'
 scripts/inputs/build_inputs.py ${BASE_DIR}/input_values ${BASE_DIR}/test_input_templates ${BASE_DIR}/test_inputs_large -a '{"test_batch" : "test_batch_large"}'
