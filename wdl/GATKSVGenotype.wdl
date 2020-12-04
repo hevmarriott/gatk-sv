@@ -1,13 +1,18 @@
 version 1.0
 
 import "Structs.wdl"
+import "GATKSVGenotypeInnerScatter.wdl" as InnerScatter
 
 workflow GATKSVGenotype {
   input {
     File vcf
     File sample_coverage_file
-    Int records_per_shard = 2000
     String batch
+
+    Int records_per_shard = 2000
+    Int predictive_samples = 100
+    Int predictive_iter = 10
+    Int discrete_samples = 1000
 
     String genotyping_gatk_docker
     String sharding_gatk_docker
@@ -47,38 +52,31 @@ workflow GATKSVGenotype {
         vcf_index = SplitDepthCalls.out_pesr_index,
         records_per_shard = records_per_shard,
         svtype = svtype,
-        basename = batch + "." + svtype,
+        basename = shard_name,
         gatk_docker = sharding_gatk_docker,
         runtime_attr_override = runtime_attr_shard
     }
-    scatter (i in range(length(ShardVcf.out))) {
-      String model_name = shard_name + ".shard_" + i
-      call SVTrainGenotyping {
-        input:
-          vcf = ShardVcf.out[i],
-          sample_coverage_file = sample_coverage_file,
-          model_name = model_name,
-          gatk_docker = genotyping_gatk_docker,
-          device = device_train,
-          gpu_type = gpu_type,
-          nvidia_driver_version = nvidia_driver_version
-      }
-      call SVGenotype {
-        input:
-          vcf = ShardVcf.out[i],
-          model_tar = SVTrainGenotyping.out,
-          model_name = model_name,
-          output_vcf_filename = "~{model_name}.genotyped.vcf.gz",
-          gatk_docker = genotyping_gatk_docker,
-          device = device_genotype,
-          gpu_type = gpu_type,
-          nvidia_driver_version = nvidia_driver_version
-      }
+    call InnerScatter.GATKSVGenotypeInnerScatter {
+      input:
+        vcfs = ShardVcf.out,
+        sample_coverage_file = sample_coverage_file,
+        outer_shard_name = shard_name,
+        records_per_shard = records_per_shard,
+        predictive_samples = predictive_samples,
+        predictive_iter = predictive_iter,
+        discrete_samples = discrete_samples,
+        genotyping_gatk_docker = genotyping_gatk_docker,
+        device_train = device_train,
+        device_genotype = device_genotype,
+        gpu_type = gpu_type,
+        nvidia_driver_version = nvidia_driver_version,
+        runtime_attr_train = runtime_attr_train,
+        runtime_attr_infer = runtime_attr_infer
     }
   }
 
-  Array[File] genotyped_vcf_shards = flatten([[SplitDepthCalls.out_depth], flatten(SVGenotype.out)])
-  Array[File] genotyped_vcf_shard_indexes = flatten([[SplitDepthCalls.out_depth_index], flatten(SVGenotype.out_index)])
+  Array[File] genotyped_vcf_shards = flatten([[SplitDepthCalls.out_depth], flatten(GATKSVGenotypeInnerScatter.out)])
+  Array[File] genotyped_vcf_shard_indexes = flatten([[SplitDepthCalls.out_depth_index], flatten(GATKSVGenotypeInnerScatter.out_index)])
 
   call ConcatVcfs {
     input:
@@ -93,134 +91,6 @@ workflow GATKSVGenotype {
   output {
     File genotyped_vcf = ConcatVcfs.out
     File genotyped_vcf_index = ConcatVcfs.out_index
-  }
-}
-
-task SVTrainGenotyping {
-  input {
-    File vcf
-    File sample_coverage_file
-    String model_name
-    String gatk_docker
-    String device
-    Int? max_iter
-    String gpu_type
-    String nvidia_driver_version
-    RuntimeAttr? runtime_attr_override
-  }
-
-  RuntimeAttr default_attr = object {
-    cpu_cores: 1,
-    mem_gb: 3.75,
-    disk_gb: 10,
-    boot_disk_gb: 10,
-    preemptible_tries: 3,
-    max_retries: 1
-  }
-  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-  Float mem_gb = select_first([runtime_attr.mem_gb, default_attr.mem_gb])
-  Int java_mem_mb = ceil(mem_gb * 1000 * 0.8)
-
-  output {
-    File out = "~{model_name}.sv_genotype_model.tar.gz"
-    Array[File] journals = glob("gatkStreamingProcessJournal-*.txt")
-  }
-  command <<<
-    set -euo pipefail
-    mkdir svmodel
-    tabix ~{vcf}
-
-    gatk --java-options -Xmx~{java_mem_mb}M SVTrainGenotyping \
-      --variant ~{vcf} \
-      --coverage-file ~{sample_coverage_file} \
-      --output-name ~{model_name} \
-      --output-dir svmodel \
-      --device ~{device} \
-      --jit \
-      ~{"--max-iter " + max_iter} \
-      --enable-journal
-
-    tar czf ~{model_name}.sv_genotype_model.tar.gz svmodel/*
-  >>>
-  runtime {
-    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-    memory: mem_gb + " GiB"
-    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-    docker: gatk_docker
-    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-    #gpuCount: 1
-    #gpuType: gpu_type
-    #nvidiaDriverVersion: nvidia_driver_version
-    #zones: "us-east1-d us-east1-c us-central1-a us-central1-c us-west1-b"
-  }
-}
-
-task SVGenotype {
-  input {
-    File vcf
-    File model_tar
-    Int predictive_samples = 1000
-    Int discrete_samples = 1000
-    String model_name
-    String output_vcf_filename
-    String gatk_docker
-    String device
-    String gpu_type
-    String nvidia_driver_version
-    RuntimeAttr? runtime_attr_override
-  }
-
-  RuntimeAttr default_attr = object {
-    cpu_cores: 1,
-    mem_gb: 7.5,
-    disk_gb: 10,
-    boot_disk_gb: 10,
-    preemptible_tries: 3,
-    max_retries: 0
-  }
-  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-  Float mem_gb = select_first([runtime_attr.mem_gb, default_attr.mem_gb])
-  Int java_mem_mb = ceil(mem_gb * 1000 * 0.8)
-
-  output {
-    File out = "~{output_vcf_filename}"
-    File out_index = "~{output_vcf_filename}.tbi"
-    Array[File] journals = glob("gatkStreamingProcessJournal-*.txt")
-  }
-  command <<<
-
-    set -eo pipefail
-    mkdir svmodel
-    tar xzf ~{model_tar} svmodel/
-    tabix ~{vcf}
-
-    gatk --java-options -Xmx~{java_mem_mb}M SVGenotype \
-      -V ~{vcf} \
-      --output ~{output_vcf_filename} \
-      --predictive-samples ~{predictive_samples} \
-      --discrete-samples ~{discrete_samples} \
-      --model-name ~{model_name} \
-      --model-dir svmodel \
-      --device ~{device} \
-      --jit \
-      --enable-journal
-  >>>
-  runtime {
-    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-    memory: mem_gb + " GiB"
-    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-    docker: gatk_docker
-    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-    #gpuCount: 1
-    #gpuType: gpu_type
-    #nvidiaDriverVersion: nvidia_driver_version
-    #zones: "us-east1-d us-east1-c us-central1-a us-central1-c us-west1-b"
   }
 }
 
@@ -331,7 +201,6 @@ task ConcatVcfs {
     File out_index = outfile_name + ".tbi"
   }
 }
-
 
 task ShardVcf {
   input {
