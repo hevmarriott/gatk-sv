@@ -14,15 +14,10 @@
   "GATKSVJoinSamples.exclude_intervals" : {{ reference_resources.pesr_exclude_list | tojson }},
   "GATKSVJoinSamples.contig_list": {{ reference_resources.primary_contigs_list | tojson }},
 
-  "GATKSVJoinSamples.small_cnv_size" : "5000",
-  "GATKSVJoinSamples.small_cnv_padding" : "1000",
-  "GATKSVJoinSamples.condense_num_bins" : "2",
-  "GATKSVJoinSamples.condense_bin_size" : "200",
-
   "GATKSVJoinSamples.gatk_docker" : {{ dockers.gatk_sv_v2_docker | tojson }},
-  "GATKSVJoinSamples.gcnv_gatk_docker" : {{ dockers.gatk_docker | tojson }},
 
   "GATKSVJoinSamples.sv_base_mini_docker" : {{ dockers.sv_base_mini_docker | tojson }},
+  "GATKSVJoinSamples.sv_base_docker" : {{ dockers.sv_base_docker | tojson }},
   "GATKSVJoinSamples.sv_pipeline_base_docker" : {{ dockers.sv_pipeline_base_docker | tojson }},
   "GATKSVJoinSamples.sv_pipeline_docker" : {{ dockers.sv_pipeline_docker | tojson }},
   "GATKSVJoinSamples.condense_counts_docker" : {{ dockers.condense_counts_docker | tojson }},
@@ -32,48 +27,5 @@
   "GATKSVJoinSamples.ref_fasta_fai": {{ reference_resources.reference_index | tojson }},
   "GATKSVJoinSamples.ref_fasta_dict": {{ reference_resources.reference_dict | tojson }},
 
-  "GATKSVJoinSamples.runtime_attr_filter": {"disk_gb":  "100", "mem_gb":  "15"},
-  "GATKSVJoinSamples.runtime_attr_ploidy": {"disk_gb":  "150", "mem_gb":  "15"},
-  "GATKSVJoinSamples.runtime_attr_cohort": {"disk_gb":  "100", "mem_gb":  "22"},
-  "GATKSVJoinSamples.runtime_attr_postprocess": {"mem_gb":  "7.5"},
-
-  "GATKSVJoinSamples.ref_copy_number_autosomal_contigs": "2",
-  "GATKSVJoinSamples.allosomal_contigs": ["chrX", "chrY"],
-
-  "GATKSVJoinSamples.contig_ploidy_priors": {{ reference_resources.contig_ploidy_priors | tojson }},
-  "GATKSVJoinSamples.exclude_intervals_for_filter_intervals_ploidy": {{ reference_resources.exclude_intervals_for_gcnv_filter_intervals | tojson }},
-  "GATKSVJoinSamples.exclude_intervals_for_filter_intervals_cnv": {{ reference_resources.exclude_intervals_for_gcnv_filter_intervals | tojson }},
-
-  "GATKSVJoinSamples.num_intervals_per_scatter": "5000",
-  "GATKSVJoinSamples.do_explicit_gc_correction": "true",
-  "GATKSVJoinSamples.gcnv_enable_bias_factors": "false",
-
-  "GATKSVJoinSamples.gcnv_caller_update_convergence_threshold": "0.000001",
-  "GATKSVJoinSamples.gcnv_cnv_coherence_length" : "200",
-  "GATKSVJoinSamples.gcnv_class_coherence_length": "200",
-  "GATKSVJoinSamples.gcnv_convergence_snr_trigger_threshold": "0.2",
-  "GATKSVJoinSamples.gcnv_interval_psi_scale": "0.000001",
-  "GATKSVJoinSamples.gcnv_log_mean_bias_standard_deviation": "0.01",
-  "GATKSVJoinSamples.gcnv_max_bias_factors": "1",
-  "GATKSVJoinSamples.gcnv_max_calling_iters": "20",
-  "GATKSVJoinSamples.ploidy_global_psi_scale": "0.05",
-  "GATKSVJoinSamples.ploidy_mean_bias_standard_deviation": "1",
-
-  "GATKSVJoinSamples.gcnv_depth_correction_tau": "10000",
-  "GATKSVJoinSamples.gcnv_log_emission_sampling_median_rel_error": "0.001",
-  "GATKSVJoinSamples.gcnv_copy_number_posterior_expectation_mode" : "EXACT",
-
-  "GATKSVJoinSamples.gcnv_learning_rate" : "0.03",
-  "GATKSVJoinSamples.gcnv_num_thermal_advi_iters" : "250",
-  "GATKSVJoinSamples.gcnv_max_advi_iter_first_epoch" : "5000",
-  "GATKSVJoinSamples.gcnv_max_advi_iter_subsequent_epochs" : "200",
-  "GATKSVJoinSamples.gcnv_max_training_epochs" : "50",
-  "GATKSVJoinSamples.gcnv_min_training_epochs" : "5",
-  "GATKSVJoinSamples.gcnv_convergence_snr_averaging_window" : "100",
-  "GATKSVJoinSamples.gcnv_convergence_snr_countdown_window" : "10",
-
-  "GATKSVJoinSamples.gcnv_log_emission_sampling_rounds" : "20",
-  "GATKSVJoinSamples.gcnv_p_alt" : "0.000001",
-  "GATKSVJoinSamples.gcnv_sample_psi_scale" : "0.000001",
-  "GATKSVJoinSamples.ploidy_sample_psi_scale" : "0.001"
+  "GATKSVJoinSamples.num_intervals_per_scatter": "5000"
 }
