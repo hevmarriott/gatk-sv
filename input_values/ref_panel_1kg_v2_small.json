@@ -421,7 +421,7 @@
     "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/std_009.wham.HG00349.vcf.gz"
   ],
   "vcf" : "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/ref_panel_1kg_v2.cleaned.vcf.gz",
-  "joined_vcf" : "gs://broad-sv-dev-data/markw/ref_panel_1kg_v1_small.clustered.rd.vcf.gz",
+  "joined_vcf" : "gs://broad-sv-dev-data/markw/ref_panel_1kg_v2_small.aggregated.vcf.gz",
   "join_samples_vcfs" : [
     "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v1/manta_std/std_000.manta.HG00096.vcf.gz",
     "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v1/manta_std/std_001.manta.HG00129.vcf.gz",

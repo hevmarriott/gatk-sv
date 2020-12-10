@@ -215,7 +215,7 @@ for record in vcf.fetch():
   and record.stop - record.pos ~{size_conditional}:
     fields = [record.chrom, str(record.pos), str(record.stop)]
     print('\t'.join(fields))
-    EOF
+EOF
 
     bedtools slop -b ~{padding} -i intervals.bed -g ~{ref_fasta_fai} \
       | bedtools merge \
