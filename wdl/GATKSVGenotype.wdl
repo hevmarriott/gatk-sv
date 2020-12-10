@@ -60,7 +60,6 @@ workflow GATKSVGenotype {
       input:
         vcfs = ShardVcf.out,
         sample_coverage_file = sample_coverage_file,
-        outer_shard_name = shard_name,
         records_per_shard = records_per_shard,
         predictive_samples = predictive_samples,
         predictive_iter = predictive_iter,

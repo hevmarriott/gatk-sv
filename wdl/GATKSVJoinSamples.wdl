@@ -1,8 +1,8 @@
 version 1.0
 
-import "GermlineCNVCohort.wdl" as gcnv
 import "CollectCoverage.wdl" as cov
 import "GATKSVGenotype.wdl" as svg
+import "GermlineCNVTasks.wdl" as gcnv_tasks
 
 workflow GATKSVJoinSamples {
   input {
@@ -12,8 +12,6 @@ workflow GATKSVJoinSamples {
     Array[File] counts
     Array[File] cnmops_files
     Array[File] large_gcnv_interval_vcfs
-
-    File sample_coverage_file
 
     File sr_file
     File pe_file
@@ -196,8 +194,9 @@ workflow GATKSVJoinSamples {
   scatter (contig in contigs) {
     call ClusterVariants {
       input:
-        calls_file = MergeSVCalls.out,
-        calls_file_index = MergeSVCalls.out_index,
+        vcf = MergeSVCalls.out,
+        vcf_index = MergeSVCalls.out_index,
+        vid_prefix = "SV_" + contig + "_",
         contig = contig,
         sr_file = sr_file,
         sr_index = sr_index_,
@@ -234,121 +233,9 @@ workflow GATKSVJoinSamples {
       runtime_attr_override = runtime_attr_filter_depth
   }
 
-  scatter (i in range(length(samples))) {
-    call cov.CondenseReadCounts {
-      input:
-        counts = counts[i],
-        sample = samples[i],
-        num_bins = condense_num_bins,
-        expected_bin_size = condense_bin_size,
-        condense_counts_docker = condense_counts_docker,
-        runtime_attr_override = runtime_attr_condense_counts
-    }
-  }
 
-  call SmallCNVIntervals {
-    input:
-      vcf = FilterDepthOnlyBySize.out,
-      vcf_index = FilterDepthOnlyBySize.out_index,
-      ref_fasta_fai = ref_fasta_fai,
-      size = small_cnv_size,
-      padding = small_cnv_padding,
-      batch = batch,
-      sv_pipeline_docker = sv_pipeline_docker,
-      runtime_attr_override = runtime_attr_small_intervals
-  }
 
-  call IntersectCountsWithIntervals {
-    input:
-      counts = CondenseReadCounts.out[0],
-      interval_list = SmallCNVIntervals.out,
-      output_name = "~{batch}.small_cnvs.counts.tsv",
-      gzip = true,
-      sv_base_mini_docker = sv_base_mini_docker,
-      runtime_attr_override = runtime_attr_intersect_intervals
-  }
 
-  call cov.CountsToIntervals {
-    input:
-      counts = IntersectCountsWithIntervals.out,
-      output_name = "small_cnv_intervals",
-      linux_docker = linux_docker,
-      runtime_attr_override = runtime_attr_counts_to_intervals
-  }
-
-  call gcnv.CNVGermlineCohortWorkflow {
-    input:
-      preprocessed_intervals = CountsToIntervals.out,
-      filter_intervals = filter_intervals,
-      counts = CondenseReadCounts.out,
-      count_entity_ids = samples,
-      cohort_entity_id = batch,
-      contig_ploidy_priors = contig_ploidy_priors,
-      num_intervals_per_scatter = num_intervals_per_scatter,
-      ref_fasta_dict = ref_fasta_dict,
-      ref_fasta_fai = ref_fasta_fai,
-      ref_fasta = ref_fasta,
-      exclude_intervals_for_filter_intervals_ploidy=exclude_intervals_for_filter_intervals_ploidy,
-      exclude_intervals_for_filter_intervals_cnv=exclude_intervals_for_filter_intervals_cnv,
-      do_explicit_gc_correction = do_explicit_gc_correction,
-      gcnv_enable_bias_factors = gcnv_enable_bias_factors,
-      ref_copy_number_autosomal_contigs = ref_copy_number_autosomal_contigs,
-      allosomal_contigs = allosomal_contigs,
-      sv_base_mini_docker = sv_base_mini_docker,
-      gatk_docker = gcnv_gatk_docker,
-      linux_docker = linux_docker,
-      gcnv_learning_rate = gcnv_learning_rate,
-      gcnv_max_advi_iter_first_epoch = gcnv_max_advi_iter_first_epoch,
-      gcnv_num_thermal_advi_iters = gcnv_num_thermal_advi_iters,
-      gcnv_max_advi_iter_subsequent_epochs = gcnv_max_advi_iter_subsequent_epochs,
-      gcnv_max_training_epochs = gcnv_max_training_epochs,
-      gcnv_min_training_epochs = gcnv_min_training_epochs,
-      gcnv_convergence_snr_averaging_window = gcnv_convergence_snr_averaging_window,
-      gcnv_convergence_snr_countdown_window = gcnv_convergence_snr_countdown_window,
-      gcnv_cnv_coherence_length = gcnv_cnv_coherence_length,
-      gcnv_class_coherence_length = gcnv_class_coherence_length,
-      gcnv_copy_number_posterior_expectation_mode = gcnv_copy_number_posterior_expectation_mode,
-      gcnv_log_emission_sampling_rounds = gcnv_log_emission_sampling_rounds,
-      gcnv_p_alt = gcnv_p_alt,
-      gcnv_sample_psi_scale = gcnv_sample_psi_scale,
-      ploidy_sample_psi_scale = ploidy_sample_psi_scale,
-      gcnv_caller_update_convergence_threshold = gcnv_caller_update_convergence_threshold,
-      gcnv_convergence_snr_trigger_threshold = gcnv_convergence_snr_trigger_threshold,
-      gcnv_interval_psi_scale = gcnv_interval_psi_scale,
-      gcnv_log_emission_sampling_median_rel_error = gcnv_log_emission_sampling_median_rel_error,
-      gcnv_log_mean_bias_standard_deviation = gcnv_log_mean_bias_standard_deviation,
-      gcnv_max_bias_factors = gcnv_max_bias_factors,
-      gcnv_max_calling_iters = gcnv_max_calling_iters,
-      ploidy_global_psi_scale = ploidy_global_psi_scale,
-      ploidy_mean_bias_standard_deviation = ploidy_mean_bias_standard_deviation,
-      gcnv_depth_correction_tau = gcnv_depth_correction_tau,
-      runtime_attr_annotate = runtime_attr_annotate,
-      runtime_attr_filter = runtime_attr_filter,
-      runtime_attr_scatter = runtime_attr_scatter,
-      runtime_attr_ploidy = runtime_attr_ploidy,
-      runtime_attr_cohort = runtime_attr_cohort,
-      runtime_attr_bundle = runtime_attr_bundle,
-      runtime_attr_postprocess = runtime_attr_postprocess,
-      runtime_attr_explode = runtime_attr_explode
-  }
-
-  call MergeVcfs as MergeSmallCNVVcfs {
-    input:
-      vcfs = CNVGermlineCohortWorkflow.genotyped_intervals_vcfs,
-      vcf_indexes = CNVGermlineCohortWorkflow.genotyped_intervals_vcf_indexes,
-      output_name = "~{batch}.gcnv_small_intervals.vcf.gz",
-      sv_base_mini_docker = sv_base_mini_docker,
-      runtime_attr_override = runtime_attr_merge_vcfs
-  }
-
-  call MergeVcfs as MergeLargeCNVVcfs {
-    input:
-      vcfs = large_gcnv_interval_vcfs,
-      vcf_indexes = large_gcnv_interval_vcf_indexes_,
-      output_name = "~{batch}.gcnv_large_intervals.vcf.gz",
-      sv_base_mini_docker = sv_base_mini_docker,
-      runtime_attr_override = runtime_attr_merge_vcfs
-  }
 
   call CopyNumberPosteriors {
     input:
@@ -385,7 +272,7 @@ task CopyNumberPosteriors {
 
   RuntimeAttr default_attr = object {
     cpu_cores: 1,
-    mem_gb: 7.5,
+    mem_gb: 15,
     disk_gb: 10,
     boot_disk_gb: 10,
     preemptible_tries: 3,
@@ -436,6 +323,7 @@ task ClusterVariants {
   input {
     File vcf
     File vcf_index
+    String vid_prefix
     String contig
     File sr_file
     File sr_index
@@ -453,7 +341,7 @@ task ClusterVariants {
   }
 
   parameter_meta {
-    calls_file: {
+    vcf: {
       localization_optional: true
     }
     sr_file: {
@@ -492,7 +380,8 @@ task ClusterVariants {
       --sequence-dictionary ~{ref_fasta_dict} \
       --split-reads-file ~{sr_file} \
       --discordant-pairs-file ~{pe_file} \
-      --sample-coverage ~{sample_coverage_file}
+      --sample-coverage ~{sample_coverage_file} \
+      --variant-prefix ~{vid_prefix}
   >>>
   runtime {
     cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
@@ -564,6 +453,139 @@ task MergeSVCalls {
     maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 }
+
+task SVTrainDepth {
+  input {
+    File depth_file
+    File intervals
+    File ploidy_calls_tar
+    File sample_coverage_file
+    File ref_dict
+    String model_name
+    String gatk_docker
+    String device
+    Int? max_iter
+    RuntimeAttr? runtime_attr_override
+  }
+
+  parameter_meta {
+    depth_file: {
+           localization_optional: true
+         }
+  }
+
+  RuntimeAttr default_attr = object {
+                               cpu_cores: 1,
+                               mem_gb: 3.75,
+                               disk_gb: 15,
+                               boot_disk_gb: 10,
+                               preemptible_tries: 3,
+                               max_retries: 1
+                             }
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+  Float mem_gb = select_first([runtime_attr.mem_gb, default_attr.mem_gb])
+  Int java_mem_mb = ceil(mem_gb * 1000 * 0.8)
+
+  output {
+    File out = "~{model_name}.cnv_model.tar.gz"
+  }
+  command <<<
+    set -euo pipefail
+
+    mkdir ploidy-calls
+    tar xzf ~{ploidy_calls_tar} -C ploidy-calls
+    ls ploidy-calls/SAMPLE_*/contig_ploidy.tsv > ploidy_files.list
+
+    # Create arguments file
+    while read line; do
+    echo "--ploidy-calls-file $line" >> args.txt
+    done < ploidy_files.list
+
+    mkdir svmodel
+    gatk --java-options -Xmx~{java_mem_mb}M SVTrainDepth \
+      -L ~{intervals} \
+      --depth-file ~{depth_file} \
+      --coverage-file ~{sample_coverage_file} \
+      --output-name ~{model_name} \
+      --output-dir svmodel \
+      --arguments_file args.txt \
+      --sequence-dictionary ~{ref_dict} \
+      --jit \
+      ~{"--max-iter " + max_iter}
+
+    tar czf ~{model_name}.cnv_model.tar.gz svmodel/*
+  >>>
+  runtime {
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: mem_gb + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    docker: gatk_docker
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+}
+
+task SVInferDepth {
+  input {
+    File model_tar
+    File ref_dict
+    Int predictive_samples
+    Int predictive_iter
+    Int discrete_samples
+    String model_name
+    String output_vcf_filename
+    String gatk_docker
+    String device
+    RuntimeAttr? runtime_attr_override
+  }
+
+  RuntimeAttr default_attr = object {
+                               cpu_cores: 1,
+                               mem_gb: 7.5,
+                               disk_gb: 10,
+                               boot_disk_gb: 15,
+                               preemptible_tries: 3,
+                               max_retries: 0
+                             }
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+  Float mem_gb = select_first([runtime_attr.mem_gb, default_attr.mem_gb])
+  Int java_mem_mb = ceil(mem_gb * 1000 * 0.8)
+
+  output {
+    File out = "~{output_vcf_filename}"
+    File out_index = "~{output_vcf_filename}.tbi"
+  }
+  command <<<
+
+    set -eo pipefail
+    mkdir svmodel
+    tar xzf ~{model_tar} svmodel/
+
+    gatk --java-options -Xmx~{java_mem_mb}M SVInferDepth \
+      --output ~{output_vcf_filename} \
+      --predictive-samples ~{predictive_samples} \
+      --predictive-iter ~{predictive_iter} \
+      --discrete-samples ~{discrete_samples} \
+      --model-name ~{model_name} \
+      --model-dir svmodel \
+      --sequence-dictionary ~{ref_dict} \
+      --jit
+
+  >>>
+  runtime {
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: mem_gb + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    docker: gatk_docker
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+}
+
 
 task MergeVcfs {
   input {

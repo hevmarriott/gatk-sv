@@ -6,7 +6,6 @@ workflow GATKSVGenotypeInnerScatter {
   input {
     Array[File] vcfs
     File sample_coverage_file
-    String outer_shard_name
 
     Int records_per_shard = 2000
     Int predictive_samples = 100
@@ -27,7 +26,7 @@ workflow GATKSVGenotypeInnerScatter {
   }
 
   scatter (i in range(length(vcfs))) {
-    String model_name = outer_shard_name + ".shard_" + i
+    String model_name = basename(vcfs[i], ".vcf.gz")
     call SVTrainGenotyping {
       input:
         vcf = vcfs[i],
@@ -36,7 +35,8 @@ workflow GATKSVGenotypeInnerScatter {
         gatk_docker = genotyping_gatk_docker,
         device = device_train,
         gpu_type = gpu_type,
-        nvidia_driver_version = nvidia_driver_version
+        nvidia_driver_version = nvidia_driver_version,
+        runtime_attr_override = runtime_attr_train
     }
     call SVGenotype {
       input:
@@ -50,7 +50,8 @@ workflow GATKSVGenotypeInnerScatter {
         gatk_docker = genotyping_gatk_docker,
         device = device_genotype,
         gpu_type = gpu_type,
-        nvidia_driver_version = nvidia_driver_version
+        nvidia_driver_version = nvidia_driver_version,
+        runtime_attr_override = runtime_attr_infer
     }
   }
 
@@ -76,7 +77,7 @@ task SVTrainGenotyping {
   RuntimeAttr default_attr = object {
     cpu_cores: 1,
     mem_gb: 3.75,
-    disk_gb: 10,
+    disk_gb: 15,
     boot_disk_gb: 10,
     preemptible_tries: 3,
     max_retries: 1
@@ -88,7 +89,6 @@ task SVTrainGenotyping {
 
   output {
     File out = "~{model_name}.sv_genotype_model.tar.gz"
-    Array[File] journals = glob("gatkStreamingProcessJournal-*.txt")
   }
   command <<<
     set -euo pipefail
@@ -102,8 +102,7 @@ task SVTrainGenotyping {
       --output-dir svmodel \
       --device ~{device} \
       --jit \
-      ~{"--max-iter " + max_iter} \
-      --enable-journal
+      ~{"--max-iter " + max_iter}
 
     tar czf ~{model_name}.sv_genotype_model.tar.gz svmodel/*
   >>>
@@ -154,7 +153,6 @@ task SVGenotype {
   output {
     File out = "~{output_vcf_filename}"
     File out_index = "~{output_vcf_filename}.tbi"
-    Array[File] journals = glob("gatkStreamingProcessJournal-*.txt")
   }
   command <<<
 
@@ -172,8 +170,7 @@ task SVGenotype {
       --model-name ~{model_name} \
       --model-dir svmodel \
       --device ~{device} \
-      --jit \
-      --enable-journal
+      --jit
   >>>
   runtime {
     cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
