@@ -76,8 +76,8 @@ task SVTrainGenotyping {
 
   RuntimeAttr default_attr = object {
     cpu_cores: 1,
-    mem_gb: 3.75,
-    disk_gb: 15,
+    mem_gb: 2.0,
+    disk_gb: 10,
     boot_disk_gb: 10,
     preemptible_tries: 3,
     max_retries: 1
@@ -139,9 +139,9 @@ task SVGenotype {
 
   RuntimeAttr default_attr = object {
     cpu_cores: 1,
-    mem_gb: 7.5,
+    mem_gb: 4.0,
     disk_gb: 10,
-    boot_disk_gb: 15,
+    boot_disk_gb: 10,
     preemptible_tries: 3,
     max_retries: 0
   }
