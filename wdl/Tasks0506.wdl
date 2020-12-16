@@ -372,7 +372,7 @@ task FilterVcf {
   Float base_mem_gb = 2.0
   RuntimeAttr runtime_default = object {
     mem_gb: base_mem_gb + compression_factor * input_size,
-    disk_gb: ceil(base_disk_gb + input_size * 2.0 * (1 + compression_factor)),
+    disk_gb: ceil(base_disk_gb + input_size * 4.0 * (1 + compression_factor)),
     cpu_cores: 1,
     preemptible_tries: 3,
     max_retries: 1,
