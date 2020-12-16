@@ -327,6 +327,9 @@
     "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/model_files/ref_panel_1kg_v2-gcnv-model-shard-98.tar.gz",
     "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/model_files/ref_panel_1kg_v2-gcnv-model-shard-99.tar.gz"
   ],
+  "genotype_eps_pe": "1e-2",
+  "genotype_eps_sr1": "1e-2",
+  "genotype_eps_sr2": "1e-2",
   "genotype_pesr_pesr_sepcutoff" : "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/ref_panel_1kg_v2.pesr.pesr_sepcutoff.txt",
   "genotype_pesr_depth_sepcutoff" : "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/ref_panel_1kg_v2.pesr.depth_sepcutoff.txt",
   "genotype_depth_pesr_sepcutoff" : "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/ref_panel_1kg_v2.depth.pesr_sepcutoff.txt",

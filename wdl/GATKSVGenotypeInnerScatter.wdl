@@ -12,6 +12,11 @@ workflow GATKSVGenotypeInnerScatter {
     Int predictive_iter = 10
     Int discrete_samples = 1000
 
+    # Model parameters
+    Float? eps_pe
+    Float? eps_sr1
+    Float? eps_sr2
+
     String genotyping_gatk_docker
 
     # cpu or cuda
@@ -32,6 +37,9 @@ workflow GATKSVGenotypeInnerScatter {
         vcf = vcfs[i],
         sample_coverage_file = sample_coverage_file,
         model_name = model_name,
+        eps_pe = eps_pe,
+        eps_sr1 = eps_sr1,
+        eps_sr2 = eps_sr2,
         gatk_docker = genotyping_gatk_docker,
         device = device_train,
         gpu_type = gpu_type,
@@ -68,6 +76,9 @@ task SVTrainGenotyping {
     String model_name
     String gatk_docker
     String device
+    Float? eps_pe
+    Float? eps_sr1
+    Float? eps_sr2
     Int? max_iter
     String gpu_type
     String nvidia_driver_version
@@ -102,7 +113,10 @@ task SVTrainGenotyping {
       --output-dir svmodel \
       --device ~{device} \
       --jit \
-      ~{"--max-iter " + max_iter}
+      ~{"--max-iter " + max_iter} \
+      ~{"--eps-pe " + eps_pe} \
+      ~{"--eps-sr1 " + eps_sr1} \
+      ~{"--eps-sr2 " + eps_sr2}
 
     tar czf ~{model_name}.sv_genotype_model.tar.gz svmodel/*
   >>>

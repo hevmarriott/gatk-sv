@@ -3,6 +3,10 @@
   "GATKSVGenotype.vcf" : {{ ref_panel.joined_vcf | tojson }},
   "GATKSVGenotype.sample_coverage_file" : {{ ref_panel.sample_coverage_file | tojson }},
 
+  "GATKSVGenotype.eps_pe" : {{ ref_panel.genotype_eps_pe | tojson }},
+  "GATKSVGenotype.eps_sr1" : {{ ref_panel.genotype_eps_sr1 | tojson }},
+  "GATKSVGenotype.eps_sr2" : {{ ref_panel.genotype_eps_sr2 | tojson }},
+
   "GATKSVGenotype.records_per_shard" : "1000",
   "GATKSVGenotype.predictive_samples" : "100",
   "GATKSVGenotype.predictive_iter" : "10",
