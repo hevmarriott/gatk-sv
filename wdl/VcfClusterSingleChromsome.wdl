@@ -136,10 +136,7 @@ task JoinContigFromRemoteVcfs {
 
   # when filtering/sorting/etc, memory usage will likely go up (much of the data will have to
   # be held in memory or disk while working, potentially in a form that takes up more space)
-  Int num_vcfs = length(vcfs)
-  Float max_vcf_size_gb = 0.5
-  Float input_size = max_vcf_size_gb * num_vcfs
-  #Float input_size = size([vcf_list, batches_list], "GiB")
+  Float input_size = size(vcfs, "GiB")
   Float compression_factor = 5.0
   Float base_disk_gb = 5.0
   Float base_mem_gb = 2.0
