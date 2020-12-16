@@ -224,8 +224,8 @@ workflow GATKSVJoinSamples {
     input:
       vcf = FilterDepthOnlyBySize.out,
       vcf_index = FilterDepthOnlyBySize.out_index,
-      gcnv_intervals_vcfs = [DepthLarge.out, DepthLarge.out],
-      gcnv_intervals_vcf_indexes = [DepthLarge.out_index, DepthLarge.out_index],
+      gcnv_intervals_vcfs = [DepthLarge.out, DepthSmall.out],
+      gcnv_intervals_vcf_indexes = [DepthLarge.out_index, DepthSmall.out_index],
       ploidy_calls_tar = ploidy_calls_tar,
       ref_fasta_dict = ref_fasta_dict,
       batch = batch,
