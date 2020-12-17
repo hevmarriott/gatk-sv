@@ -163,7 +163,7 @@ workflow GATKSVDepth {
       vcfs = SVInferDepth.out,
       vcfs_idx = SVInferDepth.out_index,
       merge_sort = true,
-      outfile_prefix = "~{batch}.depth",
+      outfile_prefix = "~{batch}.depth.~{cnv_size_name}",
       sv_base_mini_docker = sv_base_mini_docker,
       runtime_attr_override = runtime_attr_concat
   }

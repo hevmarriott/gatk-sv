@@ -12,7 +12,6 @@ workflow GATKSVJoinSamples {
     Array[String] samples
     Array[File] counts
     Array[File] cnmops_files
-    Array[File] large_gcnv_interval_vcfs
 
     File sr_file
     File pe_file
@@ -33,7 +32,7 @@ workflow GATKSVJoinSamples {
     Int num_intervals_per_scatter = 10000
 
     Int large_cnv_padding = 100000
-    Int small_cnv_padding = 1000
+    Int small_cnv_padding = 10000
     Int depth_train_max_iter = 2000
     Int depth_predictive_samples = 100
     Int depth_predictive_iter = 10
@@ -74,10 +73,6 @@ workflow GATKSVJoinSamples {
 
   scatter (i in range(length(cnmops_files))) {
     File cnmops_file_indexes_ = cnmops_files[i] + ".tbi"
-  }
-
-  scatter (i in range(length(large_gcnv_interval_vcfs))) {
-    File large_gcnv_interval_vcf_indexes_ = large_gcnv_interval_vcfs[i] + ".tbi"
   }
 
   File sr_index_ = sr_file + ".tbi"
@@ -224,8 +219,8 @@ workflow GATKSVJoinSamples {
     input:
       vcf = FilterDepthOnlyBySize.out,
       vcf_index = FilterDepthOnlyBySize.out_index,
-      gcnv_intervals_vcfs = [DepthLarge.out, DepthSmall.out],
-      gcnv_intervals_vcf_indexes = [DepthLarge.out_index, DepthSmall.out_index],
+      depth_posterior_vcfs = [DepthLarge.out, DepthSmall.out],
+      depth_posterior_vcfs_indexes = [DepthLarge.out_index, DepthSmall.out_index],
       ploidy_calls_tar = ploidy_calls_tar,
       ref_fasta_dict = ref_fasta_dict,
       batch = batch,
@@ -243,8 +238,8 @@ task CopyNumberPosteriors {
   input {
     File vcf
     File vcf_index
-    Array[File] gcnv_intervals_vcfs
-    Array[File] gcnv_intervals_vcf_indexes
+    Array[File] depth_posterior_vcfs
+    Array[File] depth_posterior_vcfs_indexes
     File ploidy_calls_tar
     File ref_fasta_dict
     String batch
@@ -278,7 +273,7 @@ task CopyNumberPosteriors {
     ls ploidy-calls/SAMPLE_*/contig_ploidy.tsv > ploidy_files.list
 
     # Create arguments file
-    echo "--cnv-intervals-vcf ~{sep=" --cnv-intervals-vcf " gcnv_intervals_vcfs}" > args.txt
+    echo "--cnv-intervals-vcf ~{sep=" --cnv-intervals-vcf " depth_posterior_vcfs}" > args.txt
     while read line; do
       echo "--ploidy-calls-file $line" >> args.txt
     done < ploidy_files.list

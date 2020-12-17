@@ -469,17 +469,5 @@
     "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v1/wham_std/std_007.wham.HG00288.vcf.gz",
     "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v1/wham_std/std_008.wham.HG00337.vcf.gz",
     "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v1/wham_std/std_009.wham.HG00349.vcf.gz"
-  ],
-  "large_gcnv_interval_vcfs": [
-    "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/genotyped_intervals/genotyped-intervals-HG00096.vcf.gz",
-    "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/genotyped_intervals/genotyped-intervals-HG00129.vcf.gz",
-    "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/genotyped_intervals/genotyped-intervals-HG00140.vcf.gz",
-    "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/genotyped_intervals/genotyped-intervals-HG00150.vcf.gz",
-    "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/genotyped_intervals/genotyped-intervals-HG00187.vcf.gz",
-    "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/genotyped_intervals/genotyped-intervals-HG00239.vcf.gz",
-    "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/genotyped_intervals/genotyped-intervals-HG00277.vcf.gz",
-    "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/genotyped_intervals/genotyped-intervals-HG00288.vcf.gz",
-    "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/genotyped_intervals/genotyped-intervals-HG00337.vcf.gz",
-    "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v2/gcnv/genotyped_intervals/genotyped-intervals-HG00349.vcf.gz"
   ]
 }
