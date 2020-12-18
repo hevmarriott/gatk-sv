@@ -17,12 +17,8 @@ import svtk.utils as svu
 
 def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
 
-    active_records = []
-    counts = defaultdict(int)
-
-    # TODO : To reproduce behavior of the previous version of this script, we output singletons and matching pairs only
+    # Given one pesr record and one depth record, merge depth attributes into the pesr record
     def _merge_pair(record_a, record_b):
-
         is_depth_a = _record_is_depth(record_a)
         is_depth_b = _record_is_depth(record_b)
         if is_depth_a == is_depth_b:
@@ -33,10 +29,6 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
         else:
             pesr_record = record_a
             depth_record = record_b
-
-        svtype = pesr_record.info['SVTYPE']
-        counts[svtype] += 1
-        pesr_record.id = '{0}_{1}_{2}'.format(prefix, svtype, counts[svtype])
 
         pesr_record.info['ALGORITHMS'] = tuple(sorted(list(set(pesr_record.info['ALGORITHMS'] + ('depth',)))))
         pesr_record.info['MEMBERS'] = (pesr_record.id, depth_record.id)
@@ -53,12 +45,16 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
     def _write_record(record, salvaged):
         svtype = record.info['SVTYPE']
         counts[svtype] += 1
-        record_copy = record.copy()
-        record_copy.id = '{0}_{1}_{2}'.format(prefix, svtype, counts[svtype])
+        if _record_is_depth(record):
+            new_record = clean_depth_record(base_record, record)
+        else:
+            new_record = record.copy()
+        member_id = new_record.id
+        new_record.id = '{0}_{1}_{2}'.format(prefix, svtype, counts[svtype])
         if salvaged:
-            record_copy.id = record_copy.id + "_salvaged"
-        record_copy.info['MEMBERS'] = (record.id,)
-        fout.write(record_copy)
+            new_record.id = new_record.id + "_salvaged"
+        new_record.info['MEMBERS'] = (member_id,)
+        fout.write(new_record)
 
     def _flush_active_records():
         for r in active_records:
@@ -81,6 +77,18 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
                and _reciprocal_overlap(record_a, record_b) \
                and _sample_overlap(record_a, record_b)
 
+    def _get_base_record(vcf):
+        for record in vcf.fetch():
+            if not _record_is_depth(record):
+                vcf.reset()
+                return record
+
+    base_record = _get_base_record(vcf)
+    if base_record is None:
+        raise ValueError("No PESR records were found")
+
+    active_records = []
+    counts = defaultdict(int)
     current_contig = None
 
     for record in vcf.fetch():
@@ -115,6 +123,29 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
         active_records = [r for r in active_records if r.id not in finalized_record_ids and r.id not in clustered_depth_ids]
 
     _flush_active_records()
+
+
+def clean_depth_record(base_record, depth_record):
+    base = base_record.copy()
+    base.chrom = depth_record.chrom
+    base.pos = depth_record.pos
+    base.id = depth_record.id
+    base.ref = depth_record.ref
+    base.alts = depth_record.alts
+    base.stop = depth_record.stop
+
+    for key in base.info.keys():
+        if key not in depth_record.info:
+            base.info.pop(key)
+
+    for key, val in depth_record.info.items():
+        base.info[key] = val
+
+    for sample in depth_record.samples:
+        for key, val in depth_record.samples[sample].items():
+            base.samples[sample][key] = val
+
+    return base
 
 
 def check_header(vcf):
