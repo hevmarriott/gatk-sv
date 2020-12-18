@@ -19,10 +19,9 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
 
     active_records = []
     counts = defaultdict(int)
-    clustered_ids = set()
 
     # TODO : To reproduce behavior of the previous version of this script, we output singletons and matching pairs only
-    def _merge_and_write_pair(record_a, record_b):
+    def _merge_pair(record_a, record_b):
 
         is_depth_a = _record_is_depth(record_a)
         is_depth_b = _record_is_depth(record_b)
@@ -37,24 +36,21 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
 
         svtype = pesr_record.info['SVTYPE']
         counts[svtype] += 1
-        record = pesr_record.copy()
-        record.id = '{0}_{1}_{2}'.format(prefix, svtype, counts[svtype])
+        pesr_record.id = '{0}_{1}_{2}'.format(prefix, svtype, counts[svtype])
 
-        record.info['ALGORITHMS'] = tuple(sorted(list(set(pesr_record.info['ALGORITHMS'] + ('depth',)))))
-        record.info['MEMBERS'] = (pesr_record.id, depth_record.id)
+        pesr_record.info['ALGORITHMS'] = tuple(sorted(list(set(pesr_record.info['ALGORITHMS'] + ('depth',)))))
+        pesr_record.info['MEMBERS'] = (pesr_record.id, depth_record.id)
 
-        for sample in record.samples:
+        for sample in pesr_record.samples:
             if 'EV' in pesr_record.samples[sample].keys() and 'EV' in depth_record.info.keys():
                 pesr_ev = pesr_record.samples[sample]['EV']
                 depth_ev = depth_record.samples[sample]['EV']
-                record.samples[sample]['EV'] = tuple(sorted(set(pesr_ev).union(depth_ev)))
+                pesr_record.samples[sample]['EV'] = tuple(sorted(set(pesr_ev).union(depth_ev)))
 
         if 'varGQ' in pesr_record.info.keys() and 'varGQ' in depth_record.info.keys():
-            record.info['varGQ'] = max(pesr_record.info['varGQ'], depth_record.info['varGQ'])
+            pesr_record.info['varGQ'] = max(pesr_record.info['varGQ'], depth_record.info['varGQ'])
 
-        fout.write(record)
-
-    def _write_singleton(record, salvaged):
+    def _write_record(record, salvaged):
         svtype = record.info['SVTYPE']
         counts[svtype] += 1
         record_copy = record.copy()
@@ -66,7 +62,7 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
 
     def _flush_active_records():
         for r in active_records:
-            _write_singleton(r, False)
+            _write_record(r, False)
         active_records.clear()
 
     def _record_is_depth(record):
@@ -89,16 +85,14 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
 
     for record in vcf.fetch():
 
-        if record.start == 11317770:
-            print(record)
-
-        # Filter all-ref sites
+        # Write all-ref sites as "salvaged"
         samples = svu.get_called_samples(record)
         if len(samples) == 0:
-            _write_singleton(record, True)
+            _write_record(record, True)
             continue
 
         finalized_record_ids = set()
+        clustered_depth_ids = set()
         if current_contig is None or record.contig != current_contig:
             # Started a new contig
             _flush_active_records()
@@ -108,16 +102,17 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
             for ar in active_records:
                 if ar.stop < record.start:
                     # Since traversing in order, this cluster cannot have any more members
-                    # Only write singleton if it was not clustered with another variant
-                    if ar.id not in clustered_ids:
-                        _write_singleton(ar, False)
+                    # Only write depth record if not clustered with a pesr record (filtered in comprehension below)
+                    _write_record(ar, False)
                     finalized_record_ids.add(ar.id)
                 elif _records_cluster_together(record, ar):
-                    _merge_and_write_pair(record, ar)
-                    clustered_ids.add(record.id)
-                    clustered_ids.add(ar.id)
-        active_records = [r for r in active_records if r.id not in finalized_record_ids]
+                    _merge_pair(record, ar)
+                    if _record_is_depth(record):
+                        clustered_depth_ids.add(record.id)
+                    if _record_is_depth(ar):
+                        clustered_depth_ids.add(ar.id)
         active_records.append(record)
+        active_records = [r for r in active_records if r.id not in finalized_record_ids and r.id not in clustered_depth_ids]
 
     _flush_active_records()
 
