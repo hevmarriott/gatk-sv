@@ -1,12 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#
-# Copyright © 2017 Matthew Stone <mstone5@mgh.harvard.edu>
-# Distributed under terms of the MIT license.
-
-"""
-
-"""
 
 import argparse
 import sys
@@ -30,8 +23,8 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
             pesr_record = record_a
             depth_record = record_b
 
-        pesr_record.info['ALGORITHMS'] = tuple(sorted(list(set(pesr_record.info['ALGORITHMS'] + ('depth',)))))
-        pesr_record.info['MEMBERS'] = (pesr_record.id, depth_record.id)
+        pesr_record.info['ALGORITHMS'] = tuple(sorted(set(pesr_record.info['ALGORITHMS'] + ('depth',))))
+        pesr_record.info['MEMBERS'] = tuple(sorted(set(pesr_record.info['MEMBERS'] + depth_record.info['MEMBERS'])))
 
         for sample in pesr_record.samples:
             if 'EV' in pesr_record.samples[sample].keys() and 'EV' in depth_record.info.keys():
@@ -43,17 +36,18 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
             pesr_record.info['varGQ'] = max(pesr_record.info['varGQ'], depth_record.info['varGQ'])
 
     def _write_record(record, salvaged):
+        # Only write depth record if not clustered with a pesr record
+        if record.id in clustered_depth_ids:
+            return
         svtype = record.info['SVTYPE']
         counts[svtype] += 1
         if _record_is_depth(record):
             new_record = clean_depth_record(base_record, record)
         else:
             new_record = record.copy()
-        member_id = new_record.id
         new_record.id = '{0}_{1}_{2}'.format(prefix, svtype, counts[svtype])
         if salvaged:
             new_record.id = new_record.id + "_salvaged"
-        new_record.info['MEMBERS'] = (member_id,)
         fout.write(new_record)
 
     def _flush_active_records():
@@ -89,9 +83,13 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
 
     active_records = []
     counts = defaultdict(int)
+    clustered_depth_ids = set()
     current_contig = None
 
     for record in vcf.fetch():
+
+        # Seed MEMBERS info with original VID
+        record.info['MEMBERS'] = (record.id,)
 
         # Write all-ref sites as "salvaged"
         samples = svu.get_called_samples(record)
@@ -100,7 +98,6 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
             continue
 
         finalized_record_ids = set()
-        clustered_depth_ids = set()
         if current_contig is None or record.contig != current_contig:
             # Started a new contig
             _flush_active_records()
@@ -110,17 +107,17 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
             for ar in active_records:
                 if ar.stop < record.start:
                     # Since traversing in order, this cluster cannot have any more members
-                    # Only write depth record if not clustered with a pesr record (filtered in comprehension below)
                     _write_record(ar, False)
                     finalized_record_ids.add(ar.id)
                 elif _records_cluster_together(record, ar):
+                    # Merges depth into the pesr record
                     _merge_pair(record, ar)
                     if _record_is_depth(record):
                         clustered_depth_ids.add(record.id)
                     if _record_is_depth(ar):
                         clustered_depth_ids.add(ar.id)
         active_records.append(record)
-        active_records = [r for r in active_records if r.id not in finalized_record_ids and r.id not in clustered_depth_ids]
+        active_records = [r for r in active_records if r.id not in finalized_record_ids]
 
     _flush_active_records()
 
