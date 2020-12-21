@@ -26,14 +26,16 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
         pesr_record.info['ALGORITHMS'] = tuple(sorted(set(pesr_record.info['ALGORITHMS'] + ('depth',))))
         pesr_record.info['MEMBERS'] = tuple(sorted(set(pesr_record.info['MEMBERS'] + depth_record.info['MEMBERS'])))
 
+        svu.update_best_genotypes(pesr_record, [pesr_record, depth_record], preserve_multiallelic=True)
+
+        if 'varGQ' in pesr_record.info.keys() and 'varGQ' in depth_record.info.keys():
+            pesr_record.info['varGQ'] = max(pesr_record.info['varGQ'], depth_record.info['varGQ'])
+
         for sample in pesr_record.samples:
             if 'EV' in pesr_record.samples[sample].keys() and 'EV' in depth_record.info.keys():
                 pesr_ev = pesr_record.samples[sample]['EV']
                 depth_ev = depth_record.samples[sample]['EV']
                 pesr_record.samples[sample]['EV'] = tuple(sorted(set(pesr_ev).union(depth_ev)))
-
-        if 'varGQ' in pesr_record.info.keys() and 'varGQ' in depth_record.info.keys():
-            pesr_record.info['varGQ'] = max(pesr_record.info['varGQ'], depth_record.info['varGQ'])
 
     def _write_record(record, salvaged):
         # Only write depth record if not clustered with a pesr record
