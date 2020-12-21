@@ -174,7 +174,9 @@ workflow Module0506Cluster {
     call MergePesrDepth {
       input:
         pesr_vcf=ClusterPesr.clustered_vcf,
+        pesr_vcf_index=ClusterPesr.clustered_vcf_idx,
         depth_vcf=ClusterDepth.clustered_vcf,
+        depth_vcf_index=ClusterDepth.clustered_vcf_idx,
         contig=contig,
         sv_pipeline_docker=sv_pipeline_docker,
         runtime_attr_override=runtime_override_merge_pesr_depth
@@ -229,7 +231,9 @@ workflow Module0506Cluster {
 task MergePesrDepth {
   input {
     File pesr_vcf
+    File pesr_vcf_index
     File depth_vcf
+    File depth_vcf_index
     String contig
     String sv_pipeline_docker
     RuntimeAttr? runtime_attr_override
