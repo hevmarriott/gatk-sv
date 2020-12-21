@@ -107,7 +107,9 @@ def merge_pesr_depth(vcf, fout, prefix, frac=0.5, sample_overlap=0.5):
         else:
             # Check if this record belongs to an existing cluster
             for ar in active_records:
-                if ar.stop < record.start:
+                # Upper-bound on current and future overlap (when > 0)
+                ar_overlap_test = (ar.stop - record.start) / float(ar.stop - ar.start)
+                if ar_overlap_test < frac:
                     # Since traversing in order, this cluster cannot have any more members
                     _write_record(ar, False)
                     finalized_record_ids.add(ar.id)
