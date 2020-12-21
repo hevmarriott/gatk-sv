@@ -240,7 +240,7 @@ task MergePesrDepth {
   # when filtering/sorting/etc, memory usage will likely go up (much of the data will have to
   # be held in memory or disk while working, potentially in a form that takes up more space)
   Float input_size = size([pesr_vcf, depth_vcf], "GiB")
-  Float compression_factor_mem = 100.0
+  Float compression_factor_mem = 5.0
   Float compression_factor_disk = 7.0
   Float base_disk_gb = 5.0
   Float base_mem_gb = 2.0
