@@ -31,8 +31,8 @@ workflow GATKSVJoinSamples {
 
     Int num_intervals_per_scatter = 10000
 
-    Int large_cnv_padding = 100000
-    Int small_cnv_padding = 10000
+    Int large_cnv_padding = 1
+    Int small_cnv_padding = 1
     Int depth_train_max_iter = 2000
     Int depth_predictive_samples = 100
     Int depth_predictive_iter = 10
