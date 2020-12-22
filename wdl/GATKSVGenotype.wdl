@@ -14,6 +14,11 @@ workflow GATKSVGenotype {
     Int predictive_iter = 10
     Int discrete_samples = 1000
 
+    # Model parameters
+    Float? eps_pe
+    Float? eps_sr1
+    Float? eps_sr2
+
     String genotyping_gatk_docker
     String sharding_gatk_docker
     String sv_base_mini_docker
@@ -64,6 +69,9 @@ workflow GATKSVGenotype {
         predictive_samples = predictive_samples,
         predictive_iter = predictive_iter,
         discrete_samples = discrete_samples,
+        eps_pe = eps_pe,
+        eps_sr1 = eps_sr1,
+        eps_sr2 = eps_sr2,
         genotyping_gatk_docker = genotyping_gatk_docker,
         device_train = device_train,
         device_genotype = device_genotype,
