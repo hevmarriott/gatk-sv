@@ -8,8 +8,6 @@ workflow GATKSVGenotypeInnerScatter {
     File sample_coverage_file
 
     Int records_per_shard = 2000
-    Int predictive_samples = 100
-    Int predictive_iter = 10
     Int discrete_samples = 1000
 
     # Model parameters
@@ -51,8 +49,6 @@ workflow GATKSVGenotypeInnerScatter {
         vcf = vcfs[i],
         model_tar = SVTrainGenotyping.out,
         model_name = model_name,
-        predictive_samples = predictive_samples,
-        predictive_iter = predictive_iter,
         discrete_samples = discrete_samples,
         output_vcf_filename = "~{model_name}.genotyped.vcf.gz",
         gatk_docker = genotyping_gatk_docker,
@@ -139,8 +135,6 @@ task SVGenotype {
   input {
     File vcf
     File model_tar
-    Int predictive_samples
-    Int predictive_iter
     Int discrete_samples
     String model_name
     String output_vcf_filename
@@ -178,8 +172,6 @@ task SVGenotype {
     gatk --java-options -Xmx~{java_mem_mb}M SVGenotype \
       -V ~{vcf} \
       --output ~{output_vcf_filename} \
-      --predictive-samples ~{predictive_samples} \
-      --predictive-iter ~{predictive_iter} \
       --discrete-samples ~{discrete_samples} \
       --model-name ~{model_name} \
       --model-dir svmodel \

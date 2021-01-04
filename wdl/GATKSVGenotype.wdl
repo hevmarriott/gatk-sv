@@ -10,8 +10,6 @@ workflow GATKSVGenotype {
     String batch
 
     Int records_per_shard = 2000
-    Int predictive_samples = 100
-    Int predictive_iter = 10
     Int discrete_samples = 1000
 
     # Model parameters
@@ -66,8 +64,6 @@ workflow GATKSVGenotype {
         vcfs = ShardVcf.out,
         sample_coverage_file = sample_coverage_file,
         records_per_shard = records_per_shard,
-        predictive_samples = predictive_samples,
-        predictive_iter = predictive_iter,
         discrete_samples = discrete_samples,
         eps_pe = eps_pe,
         eps_sr1 = eps_sr1,
