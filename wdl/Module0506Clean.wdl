@@ -13,7 +13,6 @@ workflow Module0506Clean {
     File merged_ped_file
 
     File contig_list
-    Int max_shards_per_chrom
     Int max_shards_per_chrom_clean_vcf_step1
     Int min_records_per_shard_clean_vcf_step1
     Int samples_per_clean_vcf_step2_shard
