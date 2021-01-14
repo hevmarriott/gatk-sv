@@ -28,6 +28,10 @@ workflow GATKSVDepth {
     Int num_intervals_per_scatter
 
     # Training
+    Float? mu_eps
+    Float? alpha_ref
+    Float? alpha_non_ref
+    Float? var_phi
     Int train_max_iter
     String train_device
 
@@ -138,6 +142,10 @@ workflow GATKSVDepth {
         sample_coverage_file = sample_coverage_file,
         ref_fasta_dict = ref_fasta_dict,
         model_name = model_name,
+        mu_eps = mu_eps,
+        alpha_ref = alpha_ref,
+        alpha_non_ref = alpha_non_ref,
+        var_phi = var_phi,
         max_iter = train_max_iter,
         device = train_device,
         gatk_docker = gatk_docker,
@@ -240,6 +248,12 @@ task SVTrainDepth {
     File ploidy_calls_tar
     File sample_coverage_file
     File ref_fasta_dict
+
+    Float? mu_eps
+    Float? alpha_ref
+    Float? alpha_non_ref
+    Float? var_phi
+
     String model_name
     String gatk_docker
     String device
@@ -291,7 +305,11 @@ task SVTrainDepth {
       --arguments_file args.txt \
       --sequence-dictionary ~{ref_fasta_dict} \
       --jit \
-      ~{"--max-iter " + max_iter}
+      ~{"--max-iter " + max_iter} \
+      ~{"--mu-eps " + mu_eps} \
+      ~{"--alpha-ref " + alpha_ref} \
+      ~{"--alpha-non-ref " + alpha_non_ref} \
+      ~{"--var_phi " + var_phi}
 
     tar czf ~{model_name}.model_files.tar.gz svmodel/*
   >>>

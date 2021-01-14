@@ -38,6 +38,11 @@ workflow GATKSVJoinSamples {
     Int depth_predictive_iter = 10
     Int depth_discrete_samples = 1000
 
+    Float? depth_mu_eps
+    Float? depth_alpha_ref
+    Float? depth_alpha_non_ref
+    Float? depth_var_phi
+
     String depth_train_device = 'cpu'
     String depth_infer_device = 'cpu'
 
@@ -150,6 +155,7 @@ workflow GATKSVJoinSamples {
       cnv_size_conditional = ">= 5000",
       cnv_padding = large_cnv_padding,
       num_intervals_per_scatter = num_intervals_per_scatter,
+      alpha_ref = depth_alpha_ref,
       train_max_iter = depth_train_max_iter,
       train_device = depth_train_device,
       predictive_samples = depth_predictive_samples,
@@ -190,6 +196,10 @@ workflow GATKSVJoinSamples {
       cnv_size_conditional = "< 5000",
       cnv_padding = small_cnv_padding,
       num_intervals_per_scatter = num_intervals_per_scatter,
+      mu_eps = depth_mu_eps,
+      alpha_ref = depth_alpha_ref,
+      alpha_non_ref = depth_alpha_non_ref,
+      var_phi = depth_var_phi,
       train_max_iter = depth_train_max_iter,
       train_device = depth_train_device,
       predictive_samples = depth_predictive_samples,
