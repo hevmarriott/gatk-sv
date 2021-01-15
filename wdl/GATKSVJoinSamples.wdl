@@ -239,8 +239,18 @@ workflow GATKSVJoinSamples {
   }
 
   output {
-    File out = CopyNumberPosteriors.out
-    File out_index = CopyNumberPosteriors.out_index
+    File joined_vcf = CopyNumberPosteriors.out
+    File joined_vcf_index = CopyNumberPosteriors.out_index
+
+    File large_cnv_depth_vcf = DepthLarge.out
+    File large_cnv_depth_vcf_index = DepthLarge.out_index
+    File large_cnv_depth_counts = DepthLarge.depth_file
+    File large_cnv_depth_counts_index = DepthLarge.depth_file_index
+
+    File small_cnv_depth_vcf = DepthSmall.out
+    File small_cnv_depth_vcf_index = DepthSmall.out_index
+    File small_cnv_depth_counts = DepthSmall.depth_file
+    File small_cnv_depth_counts_index = DepthSmall.depth_file_index
   }
 }
 

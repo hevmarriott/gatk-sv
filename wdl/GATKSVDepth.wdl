@@ -118,7 +118,7 @@ workflow GATKSVDepth {
     input:
       samples = samples,
       count_files = IntersectCountsWithIntervals.out,
-      batch = batch,
+      batch = "~{batch}.~{cnv_size_name}",
       sv_base_mini_docker = sv_base_mini_docker,
       sv_base_docker = sv_base_docker,
       runtime_attr_override = runtime_attr_override_make_bincov
@@ -179,6 +179,8 @@ workflow GATKSVDepth {
   output {
     File out = ConcatVcfs.out
     File out_index = ConcatVcfs.out_index
+    File depth_file = MakeBincovMatrix.merged_bincov
+    File depth_file_index = MakeBincovMatrix.merged_bincov_idx
   }
 }
 
