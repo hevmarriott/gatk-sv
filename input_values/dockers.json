@@ -18,5 +18,5 @@
   "sv_pipeline_rdtest_docker" : "us.gcr.io/broad-dsde-methods/gatk-sv/sv-pipeline-rdtest:mw-gnomad-02-6a66c96",
   "wham_docker" : "us.gcr.io/broad-dsde-methods/wham:8645aa",
 
-  "gatk_sv_v2_docker" : "us.gcr.io/broad-dsde-methods/markw/gatk:ef13d2a3db7be6583ca419d068d7d03716b49502"
+  "gatk_sv_v2_docker" : "us.gcr.io/broad-dsde-methods/markw/gatk:d3004a71161c27dc2c718dc2c0131e343f903167"
 }
