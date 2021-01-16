@@ -163,7 +163,7 @@
   "pe_file" : "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v1/module00c_output/ref_panel_1kg_v1.PE.txt.gz",
   "sr_file" : "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v1/module00c_output/ref_panel_1kg_v1.SR.txt.gz",
   "sample_mean_depth_file" : "gs://broad-sv-dev-data/markw/ref_panel_1kg_v1.melt_coverage.tsv",
-  "sample_median_count_file" : "//broad-sv-dev-data/markw/ref_panel_1kg_v2_medianCov.bed",
+  "sample_median_count_file" : "gs://broad-sv-dev-data/markw/ref_panel_1kg_v2_medianCov.bed",
   "cnmops_files" : [
     "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v1/module00c_output/ref_panel_1kg_v1.DEL.header.bed.gz",
     "gs://gatk-sv-resources-public/hg38/v0/sv-resources/ref-panel/1KG/v1/module00c_output/ref_panel_1kg_v1.DEL.large.bed.gz",
