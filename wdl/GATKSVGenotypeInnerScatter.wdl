@@ -5,7 +5,7 @@ import "Structs.wdl"
 workflow GATKSVGenotypeInnerScatter {
   input {
     Array[File] vcfs
-    File sample_coverage_file
+    File sample_mean_depth_file
 
     Int records_per_shard = 2000
     Int discrete_samples = 1000
@@ -33,7 +33,7 @@ workflow GATKSVGenotypeInnerScatter {
     call SVTrainGenotyping {
       input:
         vcf = vcfs[i],
-        sample_coverage_file = sample_coverage_file,
+        sample_mean_depth_file = sample_mean_depth_file,
         model_name = model_name,
         eps_pe = eps_pe,
         eps_sr1 = eps_sr1,
@@ -68,7 +68,7 @@ workflow GATKSVGenotypeInnerScatter {
 task SVTrainGenotyping {
   input {
     File vcf
-    File sample_coverage_file
+    File sample_mean_depth_file
     String model_name
     String gatk_docker
     String device
@@ -104,7 +104,7 @@ task SVTrainGenotyping {
 
     gatk --java-options -Xmx~{java_mem_mb}M SVTrainGenotyping \
       --variant ~{vcf} \
-      --coverage-file ~{sample_coverage_file} \
+      --coverage-file ~{sample_mean_depth_file} \
       --output-name ~{model_name} \
       --output-dir svmodel \
       --device ~{device} \

@@ -12,7 +12,7 @@ workflow GATKSVDepth {
     File vcf
     Array[String] samples
     Array[File] counts
-    File sample_coverage_file
+    File sample_median_count_file
     File ploidy_calls_tar
 
     # Condense read counts
@@ -139,7 +139,7 @@ workflow GATKSVDepth {
         depth_file = MakeBincovMatrix.merged_bincov,
         intervals = ScatterIntervals.scattered_interval_lists[i],
         ploidy_calls_tar = ploidy_calls_tar,
-        sample_coverage_file = sample_coverage_file,
+        sample_median_count_file = sample_median_count_file,
         ref_fasta_dict = ref_fasta_dict,
         model_name = model_name,
         mu_eps = mu_eps,
@@ -248,7 +248,7 @@ task SVTrainDepth {
     File depth_file
     File intervals
     File ploidy_calls_tar
-    File sample_coverage_file
+    File sample_median_count_file
     File ref_fasta_dict
 
     Float? mu_eps
@@ -301,7 +301,7 @@ task SVTrainDepth {
     gatk --java-options -Xmx~{java_mem_mb}M SVTrainDepth \
       -L ~{intervals} \
       --depth-file ~{depth_file} \
-      --coverage-file ~{sample_coverage_file} \
+      --coverage-file ~{sample_median_count_file} \
       --output-name ~{model_name} \
       --output-dir svmodel \
       --arguments_file args.txt \

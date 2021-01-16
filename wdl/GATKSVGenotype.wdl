@@ -6,7 +6,7 @@ import "GATKSVGenotypeInnerScatter.wdl" as InnerScatter
 workflow GATKSVGenotype {
   input {
     File vcf
-    File sample_coverage_file
+    File sample_mean_depth_file
     String batch
 
     Int records_per_shard = 2000
@@ -62,7 +62,7 @@ workflow GATKSVGenotype {
     call InnerScatter.GATKSVGenotypeInnerScatter {
       input:
         vcfs = ShardVcf.out,
-        sample_coverage_file = sample_coverage_file,
+        sample_mean_depth_file = sample_mean_depth_file,
         records_per_shard = records_per_shard,
         discrete_samples = discrete_samples,
         eps_pe = eps_pe,

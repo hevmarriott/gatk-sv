@@ -15,7 +15,8 @@ workflow GATKSVJoinSamples {
 
     File sr_file
     File pe_file
-    File sample_coverage_file
+    File sample_mean_depth_file
+    File sample_median_count_file
     File gatk_sv_cluster_exclude_intervals
     File exclude_intervals
     File contig_list
@@ -109,7 +110,7 @@ workflow GATKSVJoinSamples {
         sr_index = sr_index_,
         pe_file = pe_file,
         pe_index = pe_index_,
-        sample_coverage_file = sample_coverage_file,
+        sample_mean_depth_file = sample_mean_depth_file,
         gatk_sv_cluster_exclude_intervals = gatk_sv_cluster_exclude_intervals,
         exclude_intervals = exclude_intervals,
         exclude_intervals_index = exclude_intervals_index_,
@@ -147,7 +148,7 @@ workflow GATKSVJoinSamples {
       vcf = FilterDepthOnlyBySize.out,
       samples = samples,
       counts = counts,
-      sample_coverage_file = sample_coverage_file,
+      sample_median_count_file = sample_median_count_file,
       ploidy_calls_tar = ploidy_calls_tar,
       condense_num_bins = large_cnv_condense_num_bins,
       condense_bin_size = large_cnv_condense_bin_size,
@@ -188,7 +189,7 @@ workflow GATKSVJoinSamples {
       vcf = FilterDepthOnlyBySize.out,
       samples = samples,
       counts = counts,
-      sample_coverage_file = sample_coverage_file,
+      sample_median_count_file = sample_median_count_file,
       ploidy_calls_tar = ploidy_calls_tar,
       condense_num_bins = small_cnv_condense_num_bins,
       condense_bin_size = small_cnv_condense_bin_size,
@@ -327,7 +328,7 @@ task ClusterVariants {
     File sr_index
     File pe_file
     File pe_index
-    File sample_coverage_file
+    File sample_mean_depth_file
     File gatk_sv_cluster_exclude_intervals
     File exclude_intervals
     File exclude_intervals_index
@@ -378,7 +379,7 @@ task ClusterVariants {
       --sequence-dictionary ~{ref_fasta_dict} \
       --split-reads-file ~{sr_file} \
       --discordant-pairs-file ~{pe_file} \
-      --sample-coverage ~{sample_coverage_file} \
+      --sample-coverage ~{sample_mean_depth_file} \
       --variant-prefix ~{vid_prefix}
   >>>
   runtime {
