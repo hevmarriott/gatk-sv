@@ -10,8 +10,11 @@
   "GATKSVJoinSamples.sample_median_count_file" : {{ ref_panel.sample_median_count_file | tojson }},
   "GATKSVJoinSamples.ploidy_calls_tar" : {{ ref_panel.contig_ploidy_calls_tar | tojson }},
 
-  "GATKSVJoinSamples.gatk_sv_cluster_exclude_intervals" :{{ reference_resources.gatk_sv_cluster_exclude_intervals | tojson }},
-  "GATKSVJoinSamples.exclude_intervals" : {{ reference_resources.pesr_exclude_list | tojson }},
+  "GATKSVJoinSamples.inclusion_intervals_depth_only" :{{ reference_resources.inclusion_bed | tojson }},
+  "GATKSVJoinSamples.inclusion_intervals_non_depth_only" :{{ reference_resources.inclusion_bed | tojson }},
+  "GATKSVJoinSamples.exclusion_intervals_depth_only" :{{ reference_resources.exclusion_intervals_depth_only | tojson }},
+  "GATKSVJoinSamples.exclusion_intervals_non_depth_only" :{{ reference_resources.exclusion_intervals_non_depth_only | tojson }},
+
   "GATKSVJoinSamples.contig_list": {{ reference_resources.primary_contigs_list | tojson }},
 
   "GATKSVJoinSamples.gatk_docker" : {{ dockers.gatk_sv_v2_docker | tojson }},

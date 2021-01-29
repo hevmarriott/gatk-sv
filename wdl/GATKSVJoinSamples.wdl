@@ -17,12 +17,21 @@ workflow GATKSVJoinSamples {
     File pe_file
     File sample_mean_depth_file
     File sample_median_count_file
-    File gatk_sv_cluster_exclude_intervals
-    File exclude_intervals
     File contig_list
     File ploidy_calls_tar
 
-    Int min_depth_only_size = 5000
+    # Filtering options
+    File? inclusion_intervals_depth_only
+    File? exclusion_intervals_depth_only
+    Int min_size_depth_only = 5000
+    Float min_overlap_fraction_depth_only = 0.5
+    Boolean require_breakend_overlap_depth_only = false
+
+    File? inclusion_intervals_non_depth_only
+    File? exclusion_intervals_non_depth_only
+    Int min_size_non_depth_only = 50
+    Float min_overlap_fraction_non_depth_only = 0
+    Boolean require_breakend_overlap_non_depth_only = true
 
     # Condense read counts
     Int small_cnv_condense_num_bins = 2
@@ -83,7 +92,6 @@ workflow GATKSVJoinSamples {
 
   File sr_index_ = sr_file + ".tbi"
   File pe_index_ = pe_file + ".tbi"
-  File exclude_intervals_index_ = exclude_intervals + ".tbi"
 
   call MergeSVCalls {
     input:
@@ -97,13 +105,32 @@ workflow GATKSVJoinSamples {
       runtime_attr_override = runtime_attr_merge
   }
 
+  call FilterVariants {
+    input:
+      vcf = MergeSVCalls.out,
+      vcf_index = MergeSVCalls.out_index,
+      inclusion_intervals_depth_only = inclusion_intervals_depth_only,
+      exclusion_intervals_depth_only = exclusion_intervals_depth_only,
+      min_size_depth_only = min_size_depth_only,
+      min_overlap_fraction_depth_only = min_overlap_fraction_depth_only,
+      require_breakend_overlap_depth_only = require_breakend_overlap_depth_only,
+      min_size_non_depth_only = min_size_non_depth_only,
+      min_overlap_fraction_non_depth_only = min_overlap_fraction_non_depth_only,
+      require_breakend_overlap_non_depth_only = require_breakend_overlap_non_depth_only,
+      inclusion_intervals_non_depth_only = inclusion_intervals_non_depth_only,
+      exclusion_intervals_non_depth_only = exclusion_intervals_non_depth_only,
+      basename = batch,
+      gatk_docker = gatk_docker,
+      runtime_attr_override = runtime_attr_filter_depth
+  }
+
   Array[String] contigs = read_lines(contig_list)
 
   scatter (contig in contigs) {
     call ClusterVariants {
       input:
-        vcf = MergeSVCalls.out,
-        vcf_index = MergeSVCalls.out_index,
+        vcf = FilterVariants.out,
+        vcf_index = FilterVariants.out_index,
         vid_prefix = "SV_" + contig + "_",
         contig = contig,
         sr_file = sr_file,
@@ -111,9 +138,6 @@ workflow GATKSVJoinSamples {
         pe_file = pe_file,
         pe_index = pe_index_,
         sample_mean_depth_file = sample_mean_depth_file,
-        gatk_sv_cluster_exclude_intervals = gatk_sv_cluster_exclude_intervals,
-        exclude_intervals = exclude_intervals,
-        exclude_intervals_index = exclude_intervals_index_,
         ref_fasta_dict = ref_fasta_dict,
         batch = batch + "." + contig,
         gatk_docker = gatk_docker,
@@ -131,21 +155,11 @@ workflow GATKSVJoinSamples {
       runtime_attr_override = runtime_attr_concat
   }
 
-  call FilterDepthOnlyBySize {
-    input:
-      vcf = ConcatVcfs.out,
-      vcf_index = ConcatVcfs.out_index,
-      size = min_depth_only_size,
-      basename = batch,
-      gatk_docker = gatk_docker,
-      runtime_attr_override = runtime_attr_filter_depth
-  }
-
   call gatksv_depth.GATKSVDepth as DepthLarge {
     input:
       batch = batch,
       cnv_size_name = "large_cnv",
-      vcf = FilterDepthOnlyBySize.out,
+      vcf = ConcatVcfs.out,
       samples = samples,
       counts = counts,
       sample_median_count_file = sample_median_count_file,
@@ -186,7 +200,7 @@ workflow GATKSVJoinSamples {
     input:
       batch = batch,
       cnv_size_name = "small_cnv",
-      vcf = FilterDepthOnlyBySize.out,
+      vcf = ConcatVcfs.out,
       samples = samples,
       counts = counts,
       sample_median_count_file = sample_median_count_file,
@@ -228,8 +242,8 @@ workflow GATKSVJoinSamples {
 
   call CopyNumberPosteriors {
     input:
-      vcf = FilterDepthOnlyBySize.out,
-      vcf_index = FilterDepthOnlyBySize.out_index,
+      vcf = ConcatVcfs.out,
+      vcf_index = ConcatVcfs.out_index,
       depth_posterior_vcfs = [DepthLarge.out, DepthSmall.out],
       depth_posterior_vcfs_indexes = [DepthLarge.out_index, DepthSmall.out_index],
       ploidy_calls_tar = ploidy_calls_tar,
@@ -329,9 +343,6 @@ task ClusterVariants {
     File pe_file
     File pe_index
     File sample_mean_depth_file
-    File gatk_sv_cluster_exclude_intervals
-    File exclude_intervals
-    File exclude_intervals_index
     File ref_fasta_dict
     String batch
     String gatk_path = "/gatk/gatk"
@@ -374,8 +385,6 @@ task ClusterVariants {
       -V ~{vcf} \
       -O ~{batch}.clustered.vcf.gz \
       -L ~{contig} \
-      -XL ~{gatk_sv_cluster_exclude_intervals} \
-      -XL ~{exclude_intervals} \
       --sequence-dictionary ~{ref_fasta_dict} \
       --split-reads-file ~{sr_file} \
       --discordant-pairs-file ~{pe_file} \
@@ -581,11 +590,23 @@ task ShardVcf {
   }
 }
 
-task FilterDepthOnlyBySize {
+task FilterVariants {
   input {
     File vcf
     File vcf_index
-    Int size
+
+    File? inclusion_intervals_depth_only
+    File? exclusion_intervals_depth_only
+    Int min_size_depth_only
+    Float min_overlap_fraction_depth_only
+    Boolean require_breakend_overlap_depth_only
+
+    File? inclusion_intervals_non_depth_only
+    File? exclusion_intervals_non_depth_only
+    Int min_size_non_depth_only
+    Float min_overlap_fraction_non_depth_only
+    Boolean require_breakend_overlap_non_depth_only
+
     String basename
     String gatk_docker
     RuntimeAttr? runtime_attr_override
@@ -605,17 +626,37 @@ task FilterDepthOnlyBySize {
   Int java_mem_mb = ceil(mem_gb * 1000 * 0.8)
 
   output {
-    File out = "~{basename}.depth_filtered.vcf.gz"
-    File out_index = "~{basename}.depth_filtered.vcf.gz.tbi"
+    File out = "~{basename}.filtered.vcf.gz"
+    File out_index = "~{basename}.filtered.vcf.gz.tbi"
   }
   command <<<
 
     set -euo pipefail
-    gatk --java-options -Xmx~{java_mem_mb}M SelectVariants \
+    gatk --java-options -Xmx~{java_mem_mb}M SVSelectVariants \
       -V ~{vcf} \
       -O ~{basename}.depth_filtered.vcf.gz \
-      -select "ALGORITHMS == 'depth' && SVLEN <= ~{size}" \
-      --invertSelect
+      --depth-only \
+      ~{"-L " + inclusion_intervals_depth_only} \
+      ~{"-XL " + exclusion_intervals_depth_only} \
+      --min-size ~{min_size_depth_only} \
+      --min-overlap-fraction ~{min_overlap_fraction_depth_only} \
+      ~{if require_breakend_overlap_depth_only then "--require-breakend-overlap" else ""}
+
+    gatk --java-options -Xmx~{java_mem_mb}M SVSelectVariants \
+      -V ~{vcf} \
+      -O ~{basename}.non_depth_filtered.vcf.gz \
+      --non-depth-only \
+      ~{"-L " + inclusion_intervals_non_depth_only} \
+      ~{"-XL " + exclusion_intervals_non_depth_only} \
+      --min-size ~{min_size_non_depth_only} \
+      --min-overlap-fraction ~{min_overlap_fraction_non_depth_only} \
+      ~{if require_breakend_overlap_non_depth_only then "--require-breakend-overlap" else ""}
+
+    bcftools concat \
+      --allow-overlaps \
+      ~{basename}.depth_filtered.vcf.gz ~{basename}.non_depth_filtered.vcf.gz \
+      | bgzip > ~{basename}.filtered.vcf.gz
+    tabix ~{basename}.filtered.vcf.gz
 
   >>>
   runtime {
