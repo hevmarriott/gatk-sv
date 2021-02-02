@@ -240,7 +240,7 @@ workflow GATKSVJoinSamples {
       runtime_attr_concat = runtime_attr_concat
   }
 
-  call CopyNumberPosteriors {
+  call AggregateDepth {
     input:
       vcf = ConcatVcfs.out,
       vcf_index = ConcatVcfs.out_index,
@@ -254,8 +254,8 @@ workflow GATKSVJoinSamples {
   }
 
   output {
-    File joined_vcf = CopyNumberPosteriors.out
-    File joined_vcf_index = CopyNumberPosteriors.out_index
+    File joined_vcf = AggregateDepth.out
+    File joined_vcf_index = AggregateDepth.out_index
 
     File large_cnv_depth_vcf = DepthLarge.out
     File large_cnv_depth_vcf_index = DepthLarge.out_index
@@ -269,7 +269,7 @@ workflow GATKSVJoinSamples {
   }
 }
 
-task CopyNumberPosteriors {
+task AggregateDepth {
   input {
     File vcf
     File vcf_index
@@ -313,7 +313,7 @@ task CopyNumberPosteriors {
       echo "--ploidy-calls-file $line" >> args.txt
     done < ploidy_files.list
 
-    ~{gatk_path} --java-options "-Xmx~{java_mem_mb}m" SVCopyNumberPosteriors \
+    ~{gatk_path} --java-options "-Xmx~{java_mem_mb}m" SVAggregateDepth \
       --arguments_file args.txt \
       --variant ~{vcf} \
       --output ~{batch}.aggregated.vcf.gz \
