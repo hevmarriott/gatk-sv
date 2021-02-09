@@ -10,8 +10,8 @@ workflow GATKSVPreprocessSample {
     File? manta_vcf
     File? melt_vcf
     File? wham_vcf
-    Array[File]? cnmops_beds
-    # Note this will not work on gCNV VCFs generated with GATK < v4.1.5.0 !
+    Array[File] cnv_beds
+    # Note this will not work on gCNV VCFs generated with GATK < v4.1.5.0 ! Use cnv_beds instead
     File? gcnv_segments_vcf
 
     # Filtering options
@@ -45,7 +45,7 @@ workflow GATKSVPreprocessSample {
       algorithms = sv_algorithms_,
       sample = sample_id,
       gcnv_segments_vcf = gcnv_segments_vcf,
-      cnmops_beds = cnmops_beds,
+      cnv_beds = cnv_beds,
       output_basename = "~{sample_id}.preprocess_sample",
       gcnv_min_qs = gcnv_min_qs,
       min_svsize = min_svsize,
@@ -65,7 +65,7 @@ task StandardizeVcfs {
     Array[File] vcfs
     Array[String] algorithms
     File? gcnv_segments_vcf
-    Array[File]? cnmops_beds
+    Array[File] cnv_beds
     String sample
     String output_basename
     Int gcnv_min_qs
@@ -172,26 +172,27 @@ task StandardizeVcfs {
     done
 
     ############################################################
-    # Convert CNMOPS into a standardized VCF
+    # Convert bed files into a standardized VCF
     ############################################################
 
-    if ~{defined(cnmops_beds)}; then
+    beds=(~{sep=" " cnv_beds})
+    if ~{length(cnv_beds) > 0}; then
       echo "~{sample}" > samples.list
       # filter, concat, and header a combined bed
-      zcat ~{sep=" " select_first([cnmops_beds])} \
+      zcat ~{sep=" " cnv_beds} \
         | awk -F "\t" -v OFS="\t" '{if ($5=="~{sample}") print}' \
         | grep -v ^# \
         | sort -k1,1V -k2,2n \
-        > cnmops.bed
+        > cnvs.bed
       # head command triggers pipefail
       set +o pipefail
-      zcat ~{select_first([cnmops_beds])[0]} | head -n1 > header.txt
+      zcat ${beds[0]} | head -n1 > header.txt
       set -o pipefail
-      cat header.txt cnmops.bed > cnmops.headered.bed
+      cat header.txt cnvs.bed > cnvs.headered.bed
 
       # note svtk generates an index automatically
-      svtk rdtest2vcf --contigs ~{ref_fasta_fai} cnmops.headered.bed samples.list cnmops.vcf.gz
-      echo "cnmops.vcf.gz" >> vcfs.list
+      svtk rdtest2vcf --contigs ~{ref_fasta_fai} cnvs.headered.bed samples.list cnvs.vcf.gz
+      echo "cnvs.vcf.gz" >> vcfs.list
     fi
 
     ############################################################
